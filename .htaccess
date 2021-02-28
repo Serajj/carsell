@@ -1,0 +1,56 @@
+# Options:
+# -MultiViews: Turns off multiviews so it doesn't interfer with our rewrite rules
+# -Indexes: Stop directory listings
+# +FollowSymlinks: Let out rewrite rules work
+
+Options -MultiViews -Indexes +FollowSymlinks
+
+<IfModule mod_security.c>
+	# Turn off mod_security filtering.
+	# SecFilterEngine Off
+
+	# The below probably isn't needed, but better safe than sorry.
+	SecFilterScanPOST Off
+</IfModule>
+ErrorDocument 404 /cardp/404.php
+
+
+<IfModule mod_rewrite.c>
+
+	RewriteEngine On
+        RewriteBase /cardp/
+
+#Remove extra trailing slashes
+RewriteCond %{REQUEST_URI} ^(.*)/{2,}(.*)$
+RewriteRule . %1/%2 [R=301,L]
+
+#Add missing trailing slash
+RewriteCond %{REQUEST_URI} /+[^\.]+$
+RewriteRule ^(.+[^/])$ %{REQUEST_URI}/ [R=301,L]
+
+#Remove www from host name
+#RewriteCond %{HTTP_HOST} ^www\.(.*) [NC]
+#RewriteRule ^(.*)$ http://%1/$1 [R=301,NC,L]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+RewriteRule ^item/([^/]+)/([^/]+)/?$ item.php?idx=$1&itemname=$2 [L]
+RewriteRule ^category/([^/]+)/?$ category.php?catname=$1 [QSA]
+RewriteRule ^category/([^/]+)/([^/]+) category.php?catname=$1&pg=$2 [QSA]
+
+RewriteRule ^content/([^/]+)/?$ content.php?pagename=$1
+RewriteRule ^search/$ search.php [L]
+</IfModule>
+
+<ifModule mod_deflate.c>
+	<filesmatch "\.(js|css|html|jpg|png|gif|eot|woff|ttf|svg)$">
+		SetOutputFilter DEFLATE
+	</filesmatch>
+</ifModule>
+
+<FilesMatch "\.(htaccess|htpasswd|ini|log|sh|inc|bak|cache)$">
+	Order Allow,Deny
+	Deny from all
+</FilesMatch>
+
